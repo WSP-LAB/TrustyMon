@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}View Reports{% endblock %}
+
+{% block body %}
+<h1>View Reports</h1>
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Type</th>
+        <th scope="col">IP Addr</th>
+        <th scope="col">Content</th>
+        <th scope="col">Hash</th>
+        <th scope="col">Location</th>
+        <th scope="col">Date</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for r in reports %}
+        <tr>
+        <td>{{ r.re_id }}</td>
+        <td>{{ r.get_type() }}</td>
+        <td>{{ r.re_ip }}</td>
+        <td>{{ r.re_content[:40] }} ...</td>
+        <td>{{ r.re_hash[:20] }}...</td>
+        <td>{{ r.render_loc()|safe }}</td>
+        <td>{{ r.re_datetime }}</td>
+        <td><a href="#" onclick="open_detail({{ r.re_id }})">Detail</a></td>
+      </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+
+<!-- modal -->
+<div class="modal " tabindex="-1" id="detailModal">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Report #<span id='m_report_id'></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table" style="table-layout: fixed; word-wrap: break-word;">
+          <tr>
+            <th scope="row">Sink Type</th>
+            <td><span id='m_report_type'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Content</th>
+            <td><span id='m_report_content'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Reported Time</th>
+            <td><span id='m_report_time'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Reported IP</th>
+            <td><span id='m_report_ip'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Trust?</th>
+            <td><button class='btn btn-success btn-sm' onclick="trust();">Mark as Trusted</button></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- pagination -->
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+        {% for i in range(page_start, page_end) %}
+            {% if i == cur_page %}
+                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="/view/reports/{{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</nav>
+{% endblock %}
+
+{% block script %}
+<script>
+    let modal = new bootstrap.Modal(document.getElementById('detailModal'), {
+        keyboard: false
+    });
+    function open_detail(id) {
+        $.ajax({
+            url: '/api/report/' + id,
+            type: 'GET',
+            success: function(data) {
+                $('#m_report_id').text(data.re_id);
+                $('#m_report_type').text(data.re_type);
+                $('#m_report_content').text(data.re_content);
+                $('#m_report_time').text(data.re_datetime);
+                $('#m_report_ip').text(data.re_ip);
+                modal.show();
+            }
+        });
+    }
+
+    function trust() {
+        let id = $("#m_report_id").text()
+        $.ajax({
+            url: '/api/trust/' + id,
+            type: 'GET',
+            success: function(data) {
+              alert(data.message)
+            }
+        });
+    }
+</script>
+{% endblock %}

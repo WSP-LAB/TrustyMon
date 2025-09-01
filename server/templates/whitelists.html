@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}View Signatures{% endblock %}
+
+{% block body %}
+<h1>View Signatures</h1>
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Type</th>
+        <th scope="col">Content</th>
+        <th scope="col">Hash</th>
+        <th scope="col">Location</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for t in trustys %}
+        <tr>
+        <td>{{ t.tr_id }}</td>
+        <td>{{ t.get_type() }}</td>
+        <td>{{ t.tr_content[:40] }} ...</td>
+        <td>{{ t.tr_hash[:20] }}...</td>
+        <td>{{ t.render_loc()|safe }}</td>
+        <td><a href="#" onclick="open_detail({{ t.tr_id }})">Detail</a></td>
+      </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+
+<!-- modal -->
+<div class="modal " tabindex="-1" id="detailModal">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Whitelist #<span id='m_trust_id'></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table" style="table-layout: fixed; word-wrap: break-word;">
+          <tr>
+            <th scope="row">Sink Type</th>
+            <td><span id='m_trust_type'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Content</th>
+            <td><span id='m_trust_content'></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Delete?</th>
+            <td><button class='btn btn-success btn-sm' onclick="_delete();">Delete this whitelist</button></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- pagination -->
+<nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+        {% for i in range(page_start, page_end) %}
+            {% if i == cur_page %}
+                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="/view/whitelists/{{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</nav>
+{% endblock %}
+
+{% block script %}
+<script>
+    let modal = new bootstrap.Modal(document.getElementById('detailModal'), {
+        keyboard: false
+    });
+    function open_detail(id) {
+        $.ajax({
+            url: '/api/whitelist/' + id,
+            type: 'GET',
+            success: function(data) {
+                $('#m_trust_id').text(data.tr_id);
+                $('#m_trust_type').text(data.tr_type);
+                $('#m_trust_content').text(data.tr_content);
+                modal.show();
+            }
+        });
+    }
+
+    function _delete() {
+        let id = $("#m_trust_id").text()
+        $.ajax({
+            url: '/api/delete/' + id,
+            type: 'GET',
+            success: function(data) {
+              alert(data.message)
+            }
+        });
+    }
+</script>
+{% endblock %}
